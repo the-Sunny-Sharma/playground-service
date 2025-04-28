@@ -522,8 +522,9 @@ io.on("connection", (socket) => {
 
   // Get active playgrounds
   socket.on("getActivePlaygrounds", () => {
-    const playgroundsArray = Array.from(activePlaygrounds.values()).map(
-      (pg) => ({
+    const playgroundsArray = Array.from(activePlaygrounds.values())
+      .filter((pg) => pg.isPublic === true) // Filter by isPublic true
+      .map((pg) => ({
         id: pg.id,
         name: pg.name,
         language: pg.language,
@@ -532,8 +533,9 @@ io.on("connection", (socket) => {
         creatorAvatar: pg.creatorAvatar,
         participants: pg.participants.length,
         maxParticipants: pg.maxParticipants,
-      })
-    );
+      }));
+
+    console.log(`Playgrounds Array:`, playgroundsArray);
 
     socket.emit("activePlaygrounds", playgroundsArray);
   });
@@ -567,18 +569,19 @@ io.on("connection", (socket) => {
       console.log(`Playground Data:`, playground);
 
       // Notify all clients about the new playground
-      io.emit("playgroundCreated", {
-        id: playground.id,
-        name: playground.name,
-        language: playground.language,
-        isPublic: playground.isPublic,
-        createdBy: playground.createdBy,
-        creatorAvatar: playground.creatorAvatar,
-        participants: playground.participants.length,
-        maxParticipants: playground.maxParticipants,
-      });
-
-      // socket.emit("playgroundCreated", { id: playgroundId });
+      if (playground.isPublic) {
+        io.emit("playgroundCreated", {
+          id: playground.id,
+          name: playground.name,
+          language: playground.language,
+          isPublic: playground.isPublic,
+          createdBy: playground.createdBy,
+          creatorAvatar: playground.creatorAvatar,
+          participants: playground.participants.length,
+          maxParticipants: playground.maxParticipants,
+        });
+      }
+      socket.emit("playgroundCreated", { id: playgroundId });
     } catch (error) {
       console.error("Error creating playground:", error);
       socket.emit("error", { message: "Failed to create playground" });
